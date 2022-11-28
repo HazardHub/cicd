@@ -1,0 +1,50 @@
+name: Run GitVersion
+
+on:
+  workflow_call:
+    inputs:
+      override:
+        description: "Set this input to override whatever gitversion would output.  Useful because GHA syntax doesn't have a ternary operator"
+        required: false
+        type: string
+    outputs:
+      fullSemVer:
+        value: ${{ jobs.gitversion.outputs.fullSemVer }}
+  workflow_dispatch:
+
+jobs:
+  gitversion:
+    name: Generate output
+    runs-on: ubuntu-latest
+    # Map the job outputs to step outputs
+    outputs:
+      fullSemVer: ${{ steps.buildstring.outputs.fullSemVer }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        if: inputs.override == ''
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.9.7
+        if: inputs.override == ''
+        with:
+          versionSpec: "5.x"
+
+      - name: Run GitVersion
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v0.9.7
+        if: inputs.override == ''
+        with:
+          useConfigFile: true
+
+      - name: Build Version String
+        id: buildstring
+        run: |
+          VERSION=${{ inputs.override }}
+          if [ -z $VERSION ]; then
+            VERSION=v${{ steps.gitversion.outputs.fullSemVer }}
+          fi
+          echo "Setting output: fullSemver=$VERSION"
+          echo "::set-output name=fullSemVer::$VERSION"
