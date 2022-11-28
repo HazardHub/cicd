@@ -9,9 +9,9 @@ on:
         description: "Set this input to override whatever gitversion would output.  Useful because GHA syntax doesn't have a ternary operator"
         required: false
         type: string
-      outputs:
-        tag:
-          value: ${{ jobs.gitversion.outputs.fullSemVer }}
+    outputs:
+      tag:
+        value: ${{ jobs.create-tag.outputs.tag }}
   workflow_dispatch:
 
 jobs:
@@ -21,7 +21,7 @@ jobs:
     with:
       override: ${{ inputs.version }}
 
-  tag:
+  create-tag:
     runs-on: ubuntu-latest
     needs: [gitversion]
     outputs:
