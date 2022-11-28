@@ -36,7 +36,7 @@ jobs:
       - name: Tag the commit
         id: create-tag
         run: |
-          NEW_TAG="${{ inputs.version }}"
+          NEW_TAG="${{ needs.gitversion.outputs.fullSemVer }}"
           if git show-ref --tags $NEW_TAG --quiet; then
             if ! git tag --points-at HEAD | grep "$NEW_TAG"; then
               echo "The '$NEW_TAG' tag is already in use and does not point at current HEAD! Aborting job"
