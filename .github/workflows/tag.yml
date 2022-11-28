@@ -1,0 +1,45 @@
+name: Create Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "The name of the tag to create"
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      name:
+        description: "The name of the tag to create"
+        required: true
+        type: string
+    outputs:
+      tag:
+        description: "The tag created as part of publishing this commit"
+        value: ${{ jobs.create-tag.outputs.tag }}
+
+jobs:
+
+  create-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.create-tag.outputs.tag-name }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Tag the commit
+        id: create-tag
+        run: |
+          NEW_TAG="${{ inputs.name }}"
+          if git show-ref --tags $NEW_TAG --quiet; then
+            if ! git tag --points-at HEAD | grep "$NEW_TAG"; then
+              echo "The '$NEW_TAG' tag is already in use and does not point at current HEAD! Aborting job"
+              exit 1
+            fi
+            echo "The '$NEW_TAG' tag already exists, perhaps from an earlier run of this job; skipping tag creation."
+          else
+            git tag $NEW_TAG
+            git push --tags
+          fi
+          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT

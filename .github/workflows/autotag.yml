@@ -4,11 +4,6 @@ on:
   push:
     branches: [ master ]
   workflow_call:
-    inputs:
-      version:
-        description: "Set this input to override whatever gitversion would output.  Useful because GHA syntax doesn't have a ternary operator"
-        required: false
-        type: string
     outputs:
       tag:
         value: ${{ jobs.create-tag.outputs.tag }}
@@ -18,33 +13,9 @@ jobs:
   # Figure out the version string
   gitversion:
     uses: ./.github/workflows/gitversion.yml
-    with:
-      override: ${{ inputs.version }}
 
   create-tag:
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/tag.yml
     needs: [gitversion]
-    outputs:
-      tag: ${{ steps.create-tag.outputs.tag }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Tag the commit
-        id: create-tag
-        run: |
-          NEW_TAG="${{ needs.gitversion.outputs.fullSemVer }}"
-          if git show-ref --tags $NEW_TAG --quiet; then
-            if ! git tag --points-at HEAD | grep "$NEW_TAG"; then
-              echo "The '$NEW_TAG' tag is already in use and does not point at current HEAD! Aborting job"
-              exit 1
-            fi
-            echo "The '$NEW_TAG' tag already exists, perhaps from an earlier run of this job; skipping tag creation."
-          else
-            git tag $NEW_TAG
-            git push --tags
-          fi
-          echo "tag=$NEW_TAG" >> $GITHUB_OUTPUT
+    with:
+      name: ${{ needs.gitversion.outputs.fullSemVer }}
