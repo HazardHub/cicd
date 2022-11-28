@@ -47,4 +47,4 @@ jobs:
             VERSION=v${{ steps.gitversion.outputs.fullSemVer }}
           fi
           echo "Setting output: fullSemver=$VERSION"
-          echo "::set-output name=fullSemVer::$VERSION"
+          echo "fullSemVer=$VERSION" >> $GITHUB_OUTPUT
